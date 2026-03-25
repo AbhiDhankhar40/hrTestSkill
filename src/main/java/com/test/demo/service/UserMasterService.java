@@ -17,6 +17,5 @@ public interface UserMasterService {
 
     void deleteUser(Long id);
     
-    List<ModulePermissionDTO> getUserPermissions(Long userId);
 
 }
