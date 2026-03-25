@@ -1,0 +1,1 @@
+web: java -jar target/TEST_PGS-0.0.1-SNAPSHOT.jar
