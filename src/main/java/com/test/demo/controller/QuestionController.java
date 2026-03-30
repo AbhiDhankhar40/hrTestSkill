@@ -60,7 +60,7 @@ public class QuestionController {
             List<Options> qOptions = optionsMap.get(q.getId().intValue());
             if (qOptions != null) {
                 for (Options opt : qOptions) {
-                    opts.add(Map.of("name", opt.getOptionName(), "marks", opt.getMarks()));
+                    opts.add(Map.of("name", opt.getOptionName(), "marks", opt.getId()));
                 }
             }
             questionMap.put("options", opts);
