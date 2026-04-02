@@ -1,5 +1,7 @@
 package com.test.demo.controller;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import com.test.demo.model.AnswerEntry;
 import com.test.demo.model.DataEntry;
 import com.test.demo.model.Options;
@@ -39,6 +42,16 @@ public class DataEntryController {
         return ResponseEntity.ok(dataEntryService.getAllDataEntries());
     }
 
+    @PostMapping({"/check-email", "/checkEmail"})
+    public ResponseEntity<String> checkEmailUsage(@RequestBody EmailRequest request) {
+        String normalizedEmail = request == null || request.email() == null ? "" : request.email().trim();
+        if (normalizedEmail.isEmpty()) {
+            return ResponseEntity.ok("new");
+        }
+        boolean used = dataEntryService.isEmailUsed(normalizedEmail);
+        return ResponseEntity.ok(used ? "used" : "new");
+    }
+
     // @GetMapping("/{id}")
     // public ResponseEntity<DataEntry> getDataEntryById(@PathVariable Long id) {
     //     return ResponseEntity.ok(dataEntryService.getDataEntryById(id));
@@ -56,6 +69,12 @@ public class DataEntryController {
         dataEntry.setName(request.name());
         dataEntry.setEmail(request.email());
         dataEntry.setMobile(request.mobile());
+        dataEntry.setType(request.type());
+    Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        String strDate = sdf.format(cal.getTime());
+
+        dataEntry.setSubmittedOn(strDate);
         Map<Integer, Integer> entry = request.entry();
         if (entry != null && !entry.isEmpty()) {
             List<Long> optionIds = entry.values().stream()
@@ -74,16 +93,12 @@ public class DataEntryController {
         }
         String result="Failed";
         if(dataEntry.getTotalScore()>0) {
-        double percentage = (dataEntry.getTotalScore() / 250.0) * 100;
+        double percentage = (dataEntry.getTotalScore() / 20.0) * 100;
         
         if (percentage < 50) {
             result = "Failed";
-        } else if (percentage < 60) {
-            result = "Assistant Professor ";
-        } else if (percentage <= 80) {
-            result = "Associate Professor";
         } else {
-            result = "Professor";
+            result = "Pass";
         }
         }
         dataEntry.setResult(result);
@@ -147,11 +162,13 @@ public class DataEntryController {
         return ResponseEntity.ok(response);
     }
 
-    public record DataEntryRequest(String name, String email, String mobile, Map<Integer, Integer> entry) {}
+    public record DataEntryRequest(String name, String email, String mobile,String type, Map<Integer, Integer> entry) {}
 
     public record SubmitResponse(String result, DataEntry dataEntry) {}
 
     public record QuestionAnswer(Integer question, Integer answer) {}
+
+    public record EmailRequest(String email) {}
 
     private void setAnswerValue(AnswerEntry answerEntry, Integer index, Integer value) {
         if (index == null) {

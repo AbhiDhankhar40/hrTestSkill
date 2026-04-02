@@ -27,4 +27,8 @@ public class DataEntryService {
     public void deleteDataEntry(Long id) {
         dataEntryRepository.deleteById(id);
     }
+
+    public boolean isEmailUsed(String email) {
+        return dataEntryRepository.existsByEmailIgnoreCase(email);
+    }
 }

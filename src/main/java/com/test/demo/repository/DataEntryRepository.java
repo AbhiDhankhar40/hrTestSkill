@@ -6,4 +6,6 @@ import com.test.demo.model.DataEntry;
 
 @Repository
 public interface DataEntryRepository extends JpaRepository<DataEntry, Long> {
+    boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
 }

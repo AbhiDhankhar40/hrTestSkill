@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +46,33 @@ public class QuestionController {
     @GetMapping("/exam")
     public ResponseEntity<List<Map<String, Object>>> getExam() {
         List<Question> questions = questionService.getAllQuestions();
+        List<Options> options = optionsService.getAllOptions();
+
+        Map<Integer, List<Options>> optionsMap = options.stream()
+                .collect(Collectors.groupingBy(Options::getQuestionId));
+
+        List<Map<String, Object>> examList = new ArrayList<>();
+        for (Question q : questions) {
+            Map<String, Object> questionMap = new HashMap<>();
+            questionMap.put("id", q.getId());
+            questionMap.put("name", q.getName());
+
+            List<Map<String, Object>> opts = new ArrayList<>();
+            List<Options> qOptions = optionsMap.get(q.getId().intValue());
+            if (qOptions != null) {
+                for (Options opt : qOptions) {
+                    opts.add(Map.of("name", opt.getOptionName(), "marks", opt.getId()));
+                }
+            }
+            questionMap.put("options", opts);
+            examList.add(questionMap);
+        }
+        return ResponseEntity.ok(examList);
+    }
+
+    @GetMapping("/examQuestion")
+    public ResponseEntity<List<Map<String, Object>>> getExamQuestion(@RequestParam String type) {
+        List<Question> questions = questionService.findByType(type);
         List<Options> options = optionsService.getAllOptions();
 
         Map<Integer, List<Options>> optionsMap = options.stream()

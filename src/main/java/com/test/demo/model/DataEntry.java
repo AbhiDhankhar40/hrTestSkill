@@ -23,4 +23,10 @@ public class DataEntry {
     private Integer totalScore;
 
     private String result;
+
+    private String type;
+
+    private String submittedOn;
+
+
 }

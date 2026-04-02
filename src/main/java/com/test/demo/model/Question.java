@@ -15,4 +15,5 @@ public class Question {
     private Long id;
 
     private String name;
+    private String type;
 }

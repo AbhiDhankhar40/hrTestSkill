@@ -23,4 +23,8 @@ public class QuestionService {
     public List<Question> getAllQuestions() {
         return questionRepository.findAll();
     }
+
+    public List<Question> findByType(String type) {
+        return questionRepository.findByType(type);
+    }
 }
