@@ -70,7 +70,6 @@ public class DataEntryController {
         dataEntry.setName(request.name());
         dataEntry.setEmail(request.email());
         dataEntry.setMobile(request.mobile());
-        dataEntry.setType(request.type());
     Calendar cal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         String strDate = sdf.format(cal.getTime());
@@ -160,10 +159,25 @@ public class DataEntryController {
                         getAnswerValue(answerEntry, question.getId() == null ? null : question.getId().intValue())))
                 .collect(Collectors.toList());
 
+        List<Long> optionIds = response.stream()
+                .map(QuestionAnswer::answer)
+                .filter(Objects::nonNull)
+                .map(Long::valueOf)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, Integer> optionIdToMarks = optionsRepository.findAllById(optionIds).stream()
+                .collect(Collectors.toMap(Options::getId, Options::getMarks, (a, b) -> a));
+
+        response = response.stream()
+                .map(q -> new QuestionAnswer(
+                        q.question(),
+                        q.answer() == null ? null : optionIdToMarks.getOrDefault(Long.valueOf(q.answer()), 0)))
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(response);
     }
 
-    public record DataEntryRequest(String name, String email, String mobile,String type, Map<Integer, Integer> entry) {}
+    public record DataEntryRequest(String name, String email, String mobile, Map<Integer, Integer> entry) {}
 
     public record SubmitResponse(String result, DataEntry dataEntry) {}
 
@@ -233,7 +247,7 @@ public class DataEntryController {
             case 55 -> answerEntry.setAns55(value);
             case 56 -> answerEntry.setAns56(value);
             case 57 -> answerEntry.setAns57(value);
-            case 58 -> answerEntry.setAns58(value); 
+            case 58 -> answerEntry.setAns58(value);
             case 59 -> answerEntry.setAns59(value);
             case 60 -> answerEntry.setAns60(value);
             default -> {
@@ -306,8 +320,6 @@ public class DataEntryController {
             case 58 -> answerEntry.getAns58();
             case 59 -> answerEntry.getAns59();
             case 60 -> answerEntry.getAns60();
-            
-
             default -> null;
         };
     }
