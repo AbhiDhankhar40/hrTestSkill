@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.test.demo.controller.DataEntryController.QuestionAnswer;
 import com.test.demo.model.AnswerEntry;
 import com.test.demo.model.DataEntry;
 import com.test.demo.model.Options;
@@ -152,7 +153,7 @@ public class DataEntryController {
         }
 
         AnswerEntry answerEntry = answerEntryOptional.get();
-        List<QuestionAnswer> response = questionRepository.findAll().stream()
+        List<QuestionAnswer> response = questionRepository.findByType(dataEntry.getType()).stream()
                 .sorted(Comparator.comparing(Question::getId))
                 .map(question -> new QuestionAnswer(
                         question.getId() == null ? null : question.getId().intValue(),
@@ -227,6 +228,14 @@ public class DataEntryController {
             case 50 -> answerEntry.setAns50(value);
             case 51 -> answerEntry.setAns51(value);
             case 52 -> answerEntry.setAns52(value);
+            case 53 -> answerEntry.setAns53(value);
+            case 54 -> answerEntry.setAns54(value);
+            case 55 -> answerEntry.setAns55(value);
+            case 56 -> answerEntry.setAns56(value);
+            case 57 -> answerEntry.setAns57(value);
+            case 58 -> answerEntry.setAns58(value); 
+            case 59 -> answerEntry.setAns59(value);
+            case 60 -> answerEntry.setAns60(value);
             default -> {
             }
         }
@@ -289,6 +298,16 @@ public class DataEntryController {
             case 50 -> answerEntry.getAns50();
             case 51 -> answerEntry.getAns51();
             case 52 -> answerEntry.getAns52();
+            case 53 -> answerEntry.getAns53();
+            case 54 -> answerEntry.getAns54();
+            case 55 -> answerEntry.getAns55();
+            case 56 -> answerEntry.getAns56();
+            case 57 -> answerEntry.getAns57();
+            case 58 -> answerEntry.getAns58();
+            case 59 -> answerEntry.getAns59();
+            case 60 -> answerEntry.getAns60();
+            
+
             default -> null;
         };
     }

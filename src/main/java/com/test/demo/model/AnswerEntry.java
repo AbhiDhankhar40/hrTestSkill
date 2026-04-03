@@ -34,7 +34,7 @@ public class AnswerEntry {
     private Integer ans14 ;
     private Integer ans15 ;
     private Integer ans16 ;
-    private Integer ans17  ;
+    private Integer ans17 ;
     private Integer ans18 ;
     private Integer ans19 ;
     private Integer ans20 ;
@@ -68,11 +68,15 @@ public class AnswerEntry {
     private Integer ans48 ;
     private Integer ans49 ;
     private Integer ans50 ;
-        private Integer ans51 ;
-            private Integer ans52 ;
-
-
-
- 
+    private Integer ans51 ;
+    private Integer ans52 ;
+    private Integer ans53 ;
+    private Integer ans54 ;
+    private Integer ans55 ;     
+    private Integer ans56 ;
+    private Integer ans57 ;
+    private Integer ans58 ;
+    private Integer ans59 ;
+    private Integer ans60 ;
 
 }
