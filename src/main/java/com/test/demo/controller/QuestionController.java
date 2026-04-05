@@ -3,6 +3,7 @@ package com.test.demo.controller;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,6 +65,7 @@ public class QuestionController {
                     opts.add(Map.of("name", opt.getOptionName(), "marks", opt.getId()));
                 }
             }
+            Collections.shuffle(opts);
             questionMap.put("options", opts);
             examList.add(questionMap);
         }
@@ -91,6 +93,7 @@ public class QuestionController {
                     opts.add(Map.of("name", opt.getOptionName(), "marks", opt.getId()));
                 }
             }
+            Collections.shuffle(opts);
             questionMap.put("options", opts);
             examList.add(questionMap);
         }
