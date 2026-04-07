@@ -96,10 +96,10 @@ public class DataEntryController {
         if(dataEntry.getTotalScore()>0) {
         double percentage = (dataEntry.getTotalScore() / 20.0) * 100;
         
-        if (percentage < 50) {
-            result = "Failed";
+        if (dataEntry.getTotalScore()>16) {
+            result = "Pass"; 
         } else {
-            result = "Pass";
+           result = "Failed";
         }
         }
         dataEntry.setResult(result);
