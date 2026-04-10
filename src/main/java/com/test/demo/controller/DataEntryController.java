@@ -1,5 +1,6 @@
 package com.test.demo.controller;
 
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -153,11 +154,32 @@ public class DataEntryController {
         }
 
         AnswerEntry answerEntry = answerEntryOptional.get();
-        List<QuestionAnswer> response = questionRepository.findByType(dataEntry.getType()).stream()
+        List<Question> questions = questionRepository.findByType(dataEntry.getType()).stream()
                 .sorted(Comparator.comparing(Question::getId))
-                .map(question -> new QuestionAnswer(
-                        question.getId() == null ? null : question.getId().intValue(),
-                        getAnswerValue(answerEntry, question.getId() == null ? null : question.getId().intValue())))
+                .collect(Collectors.toList());
+        List<Long> optionIds = questions.stream()
+                .map(question -> getAnswerValue(answerEntry, question.getId() == null ? null : question.getId().intValue()))
+                .filter(Objects::nonNull)
+                .map(Integer::longValue)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, Options> optionsById = optionIds.isEmpty()
+                ? Map.of()
+                : optionsRepository.findAllById(optionIds).stream()
+                        .collect(Collectors.toMap(Options::getId, option -> option));
+        List<QuestionAnswer> response = questions.stream()
+                .map(question -> {
+                    Integer questionId = question.getId() == null ? null : question.getId().intValue();
+                    Integer answerId = getAnswerValue(answerEntry, questionId);
+                    Integer marks = null;
+                    if (answerId != null) {
+                        Options option = optionsById.get(answerId.longValue());
+                        if (option != null) {
+                            marks = option.getMarks();
+                        }
+                    }
+                    return new QuestionAnswer(questionId, answerId, marks);
+                })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
@@ -167,148 +189,27 @@ public class DataEntryController {
 
     public record SubmitResponse(String result, DataEntry dataEntry) {}
 
-    public record QuestionAnswer(Integer question, Integer answer) {}
+    public record QuestionAnswer(Integer question, Integer answer, Integer marks) {}
 
     public record EmailRequest(String email) {}
 
     private void setAnswerValue(AnswerEntry answerEntry, Integer index, Integer value) {
-        if (index == null) {
-            return;
-        }
-        switch (index) {
-            case 1 -> answerEntry.setAns1(value);
-            case 2 -> answerEntry.setAns2(value);
-            case 3 -> answerEntry.setAns3(value);
-            case 4 -> answerEntry.setAns4(value);
-            case 5 -> answerEntry.setAns5(value);
-            case 6 -> answerEntry.setAns6(value);
-            case 7 -> answerEntry.setAns7(value);
-            case 8 -> answerEntry.setAns8(value);
-            case 9 -> answerEntry.setAns9(value);
-            case 10 -> answerEntry.setAns10(value);
-            case 11 -> answerEntry.setAns11(value);
-            case 12 -> answerEntry.setAns12(value);
-            case 13 -> answerEntry.setAns13(value);
-            case 14 -> answerEntry.setAns14(value);
-            case 15 -> answerEntry.setAns15(value);
-            case 16 -> answerEntry.setAns16(value);
-            case 17 -> answerEntry.setAns17(value);
-            case 18 -> answerEntry.setAns18(value);
-            case 19 -> answerEntry.setAns19(value);
-            case 20 -> answerEntry.setAns20(value);
-            case 21 -> answerEntry.setAns21(value);
-            case 22 -> answerEntry.setAns22(value);
-            case 23 -> answerEntry.setAns23(value);
-            case 24 -> answerEntry.setAns24(value);
-            case 25 -> answerEntry.setAns25(value);
-            case 26 -> answerEntry.setAns26(value);
-            case 27 -> answerEntry.setAns27(value);
-            case 28 -> answerEntry.setAns28(value);
-            case 29 -> answerEntry.setAns29(value);
-            case 30 -> answerEntry.setAns30(value);
-            case 31 -> answerEntry.setAns31(value);
-            case 32 -> answerEntry.setAns32(value);
-            case 33 -> answerEntry.setAns33(value);
-            case 34 -> answerEntry.setAns34(value);
-            case 35 -> answerEntry.setAns35(value);
-            case 36 -> answerEntry.setAns36(value);
-            case 37 -> answerEntry.setAns37(value);
-            case 38 -> answerEntry.setAns38(value);
-            case 39 -> answerEntry.setAns39(value);
-            case 40 -> answerEntry.setAns40(value);
-            case 41 -> answerEntry.setAns41(value);
-            case 42 -> answerEntry.setAns42(value);
-            case 43 -> answerEntry.setAns43(value);
-            case 44 -> answerEntry.setAns44(value);
-            case 45 -> answerEntry.setAns45(value);
-            case 46 -> answerEntry.setAns46(value);
-            case 47 -> answerEntry.setAns47(value);
-            case 48 -> answerEntry.setAns48(value);
-            case 49 -> answerEntry.setAns49(value);
-            case 50 -> answerEntry.setAns50(value);
-            case 51 -> answerEntry.setAns51(value);
-            case 52 -> answerEntry.setAns52(value);
-            case 53 -> answerEntry.setAns53(value);
-            case 54 -> answerEntry.setAns54(value);
-            case 55 -> answerEntry.setAns55(value);
-            case 56 -> answerEntry.setAns56(value);
-            case 57 -> answerEntry.setAns57(value);
-            case 58 -> answerEntry.setAns58(value); 
-            case 59 -> answerEntry.setAns59(value);
-            case 60 -> answerEntry.setAns60(value);
-            default -> {
-            }
+        if (answerEntry == null || index == null || index < 1 || index > 60) return;
+        try {
+            Method method = answerEntry.getClass().getMethod("setAns" + index, Integer.class);
+            method.invoke(answerEntry, value);
+        } catch (Exception e) {
+            // Optionally log error
         }
     }
 
     private Integer getAnswerValue(AnswerEntry answerEntry, Integer index) {
-        if (index == null) {
+        if (answerEntry == null || index == null || index < 1 || index > 60) return null;
+        try {
+            Method method = answerEntry.getClass().getMethod("getAns" + index);
+            return (Integer) method.invoke(answerEntry);
+        } catch (Exception e) {
             return null;
         }
-        return switch (index) {
-            case 1 -> answerEntry.getAns1();
-            case 2 -> answerEntry.getAns2();
-            case 3 -> answerEntry.getAns3();
-            case 4 -> answerEntry.getAns4();
-            case 5 -> answerEntry.getAns5();
-            case 6 -> answerEntry.getAns6();
-            case 7 -> answerEntry.getAns7();
-            case 8 -> answerEntry.getAns8();
-            case 9 -> answerEntry.getAns9();
-            case 10 -> answerEntry.getAns10();
-            case 11 -> answerEntry.getAns11();
-            case 12 -> answerEntry.getAns12();
-            case 13 -> answerEntry.getAns13();
-            case 14 -> answerEntry.getAns14();
-            case 15 -> answerEntry.getAns15();
-            case 16 -> answerEntry.getAns16();
-            case 17 -> answerEntry.getAns17();
-            case 18 -> answerEntry.getAns18();
-            case 19 -> answerEntry.getAns19();
-            case 20 -> answerEntry.getAns20();
-            case 21 -> answerEntry.getAns21();
-            case 22 -> answerEntry.getAns22();
-            case 23 -> answerEntry.getAns23();
-            case 24 -> answerEntry.getAns24();
-            case 25 -> answerEntry.getAns25();
-            case 26 -> answerEntry.getAns26();
-            case 27 -> answerEntry.getAns27();
-            case 28 -> answerEntry.getAns28();
-            case 29 -> answerEntry.getAns29();
-            case 30 -> answerEntry.getAns30();
-            case 31 -> answerEntry.getAns31();
-            case 32 -> answerEntry.getAns32();
-            case 33 -> answerEntry.getAns33();
-            case 34 -> answerEntry.getAns34();
-            case 35 -> answerEntry.getAns35();
-            case 36 -> answerEntry.getAns36();
-            case 37 -> answerEntry.getAns37();
-            case 38 -> answerEntry.getAns38();
-            case 39 -> answerEntry.getAns39();
-            case 40 -> answerEntry.getAns40();
-            case 41 -> answerEntry.getAns41();
-            case 42 -> answerEntry.getAns42();
-            case 43 -> answerEntry.getAns43();
-            case 44 -> answerEntry.getAns44();
-            case 45 -> answerEntry.getAns45();
-            case 46 -> answerEntry.getAns46();
-            case 47 -> answerEntry.getAns47();
-            case 48 -> answerEntry.getAns48();
-            case 49 -> answerEntry.getAns49();
-            case 50 -> answerEntry.getAns50();
-            case 51 -> answerEntry.getAns51();
-            case 52 -> answerEntry.getAns52();
-            case 53 -> answerEntry.getAns53();
-            case 54 -> answerEntry.getAns54();
-            case 55 -> answerEntry.getAns55();
-            case 56 -> answerEntry.getAns56();
-            case 57 -> answerEntry.getAns57();
-            case 58 -> answerEntry.getAns58();
-            case 59 -> answerEntry.getAns59();
-            case 60 -> answerEntry.getAns60();
-            
-
-            default -> null;
-        };
     }
 }
