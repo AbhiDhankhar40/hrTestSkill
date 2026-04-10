@@ -1,9 +1,8 @@
 package com.test.demo.service;
 
-import com.test.demo.dto.ModulePermissionDTO;
-import com.test.demo.model.UserMaster;
-
 import java.util.List;
+
+import com.test.demo.model.UserMaster;
 
 public interface UserMasterService {
 
