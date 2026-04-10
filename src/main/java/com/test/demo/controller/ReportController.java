@@ -57,15 +57,28 @@ public class ReportController {
             @RequestParam String startDate,
             @RequestParam String endDate) throws IOException {
 
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat fullSdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+
         // Filter entries by type and date range (submittedOn is "dd/MM/yyyy HH:mm")
         List<DataEntry> entries = dataEntryService.getAllDataEntries().stream()
                 .filter(e -> e.getType() != null && e.getType().equalsIgnoreCase(type))
-                .filter(e -> isWithinDateRange(e.getSubmittedOn(), startDate, endDate))
+                .filter(e -> isWithinDateRange(e.getSubmittedOn(), startDate, endDate, sdf, fullSdf))
                 .collect(Collectors.toList());
 
         List<Question> questions = questionRepository.findByType(type).stream()
                 .sorted(Comparator.comparing(Question::getId))
                 .collect(Collectors.toList());
+
+        // Pre-fetch all AnswerEntries for the filtered entries to avoid N+1 queries
+        List<Long> entryIds = entries.stream().map(DataEntry::getId).collect(Collectors.toList());
+        Map<Long, AnswerEntry> answerMap = answerEntryRepository.findAll().stream()
+                .filter(ae -> ae.getDataEntryId() != null && entryIds.contains(ae.getDataEntryId()))
+                .collect(Collectors.toMap(AnswerEntry::getDataEntryId, ae -> ae, (a, b) -> a));
+
+        // Pre-fetch all Options to avoid querying inside the nested loop
+        Map<Long, Options> optionsLookup = optionsRepository.findAll().stream()
+                .collect(Collectors.toMap(Options::getId, o -> o, (a, b) -> a));
 
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Data Entry Report");
@@ -84,7 +97,7 @@ public class ReportController {
 
             // Header Row
             Row headerRow = sheet.createRow(0);
-            String[] staticHeaders = {"S.No", "Name", "Mobile", "Email", "Type"};
+            String[] staticHeaders = {"S.No", "Name", "Mobile", "Email", "Assessment Type","Score(Out of 20)"};
             for (int i = 0; i < staticHeaders.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(staticHeaders[i]);
@@ -106,19 +119,20 @@ public class ReportController {
                 row.createCell(2).setCellValue(entry.getMobile());
                 row.createCell(3).setCellValue(entry.getEmail());
                 row.createCell(4).setCellValue(entry.getType());
+                row.createCell(5).setCellValue(entry.getTotalScore());
 
-                Optional<AnswerEntry> answerEntryOpt = answerEntryRepository.findByDataEntryId(entry.getId());
-                if (answerEntryOpt.isPresent()) {
-                    AnswerEntry ae = answerEntryOpt.get();
+                AnswerEntry ae = answerMap.get(entry.getId());
+                if (ae != null) {
                     for (int i = 0; i < questions.size(); i++) {
-                        Question q = questions.get(i);
-                        Integer ansId = getAnswerValue(ae, q.getId() != null ? q.getId().intValue() : null);
+                        Integer questionId = questions.get(i).getId() != null ? questions.get(i).getId().intValue() : null;
+                        Integer ansId = getAnswerValue(ae, questionId);
+                        
                         if (ansId != null) {
-                            Optional<Options> opt = optionsRepository.findById(ansId.longValue());
-                            if (opt.isPresent()) {
+                            Options opt = optionsLookup.get(ansId.longValue());
+                            if (opt != null) {
                                 Cell cell = row.createCell(staticHeaders.length + i);
-                                cell.setCellValue(opt.get().getOptionName());
-                                if (opt.get().getMarks() != null && opt.get().getMarks() == 1) {
+                                cell.setCellValue(opt.getOptionName());
+                                if (opt.getMarks() != null && opt.getMarks() == 1) {
                                     cell.setCellStyle(greenStyle);
                                 }
                             }
@@ -142,10 +156,8 @@ public class ReportController {
         }
     }
 
-    private boolean isWithinDateRange(String submittedOn, String start, String end) {
+    private boolean isWithinDateRange(String submittedOn, String start, String end, SimpleDateFormat sdf, SimpleDateFormat fullSdf) {
         if (submittedOn == null || submittedOn.isEmpty()) return false;
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        SimpleDateFormat fullSdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         try {
             Date submittedDate = fullSdf.parse(submittedOn);
             Date startDate = sdf.parse(start);
